@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Bot Coordinador · CAFAM COMERCIAL</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07090F;
+  --s1:#0E1320;
+  --s2:#141B2D;
+  --s3:#1C2539;
+  --border:#1E2A42;
+  --border2:#253352;
+  --blue:#3B82F6;
+  --blue2:#1D4ED8;
+  --green:#10B981;
+  --red:#EF4444;
+  --amber:#F59E0B;
+  --text:#E8EDF8;
+  --text2:#8B96B0;
+  --text3:#4A5568;
+  --r:14px;--rsm:10px;--rxs:7px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;height:100vh;}
+
+/* ── LOGIN ── */
+#login-screen{
+  position:fixed;inset:0;background:var(--bg);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:20px;padding:32px;z-index:100;
+}
+.login-logo{width:64px;height:64px;background:linear-gradient(135deg,var(--blue2),var(--blue));
+  border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:30px;
+  box-shadow:0 0 32px rgba(59,130,246,0.3);}
+.login-title{font-size:22px;font-weight:700;text-align:center;}
+.login-sub{font-size:13px;color:var(--text2);text-align:center;}
+.login-box{width:100%;max-width:340px;display:flex;flex-direction:column;gap:12px;}
+.login-input{
+  width:100%;background:var(--s2);border:1px solid var(--border2);
+  border-radius:var(--rsm);color:var(--text);font-family:'Outfit',sans-serif;
+  font-size:16px;font-weight:500;padding:14px 16px;outline:none;
+  transition:border-color .2s;-webkit-appearance:none;
+}
+.login-input:focus{border-color:var(--blue);}
+.login-input::placeholder{color:var(--text3);}
+.login-btn{
+  width:100%;padding:15px;background:var(--blue);border:none;
+  border-radius:var(--rsm);color:white;font-family:'Outfit',sans-serif;
+  font-size:15px;font-weight:600;cursor:pointer;
+}
+.login-err{font-size:12px;color:var(--red);text-align:center;display:none;}
+
+/* ── HEADER ── */
+.header{
+  flex-shrink:0;
+  background:var(--s1);border-bottom:1px solid var(--border);
+  padding:14px 20px;display:flex;align-items:center;gap:12px;
+}
+.h-logo{width:36px;height:36px;background:var(--blue2);border-radius:9px;
+  display:flex;align-items:center;justify-content:center;font-size:18px;}
+.h-info h1{font-size:14px;font-weight:600;}
+.h-info p{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;}
+.h-status{margin-left:auto;display:flex;align-items:center;gap:6px;
+  font-size:11px;color:var(--text2);}
+.dot-live{width:7px;height:7px;border-radius:50%;background:var(--green);
+  animation:pulse 2s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* ── SUGERENCIAS RÁPIDAS ── */
+.chips-bar{
+  flex-shrink:0;
+  padding:10px 16px;background:var(--s1);border-bottom:1px solid var(--border);
+  display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;
+}
+.chips-bar::-webkit-scrollbar{display:none;}
+.chip{
+  flex-shrink:0;
+  background:var(--s2);border:1px solid var(--border2);
+  border-radius:20px;padding:6px 12px;
+  font-size:12px;font-weight:500;color:var(--text2);
+  cursor:pointer;white-space:nowrap;transition:all .15s;
+}
+.chip:hover,.chip:active{background:var(--blue2);border-color:var(--blue);color:white;}
+
+/* ── CHAT ── */
+.chat-wrap{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;
+  scrollbar-width:thin;scrollbar-color:var(--border) transparent;}
+.chat-wrap::-webkit-scrollbar{width:4px;}
+.chat-wrap::-webkit-scrollbar-track{background:transparent;}
+.chat-wrap::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+
+/* Mensajes */
+.msg{display:flex;flex-direction:column;max-width:88%;}
+.msg.user{align-self:flex-end;align-items:flex-end;}
+.msg.bot{align-self:flex-start;align-items:flex-start;}
+.msg-bubble{
+  padding:11px 14px;border-radius:14px;
+  font-size:13px;line-height:1.6;
+}
+.msg.user .msg-bubble{
+  background:var(--blue2);color:white;
+  border-radius:14px 14px 4px 14px;
+}
+.msg.bot .msg-bubble{
+  background:var(--s2);border:1px solid var(--border);color:var(--text);
+  border-radius:14px 14px 14px 4px;
+}
+.msg-time{font-size:10px;color:var(--text3);margin-top:4px;padding:0 4px;}
+
+/* Contenido del bot */
+.bot-section{margin-bottom:10px;}
+.bot-section:last-child{margin-bottom:0;}
+.bot-title{font-size:11px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;
+  color:var(--text3);margin-bottom:6px;}
+.bot-row{display:flex;justify-content:space-between;align-items:center;
+  padding:7px 0;border-bottom:0.5px solid var(--border);}
+.bot-row:last-child{border-bottom:none;}
+.bot-name{font-size:13px;font-weight:500;}
+.bot-detail{font-size:11px;color:var(--text2);}
+.badge{display:inline-flex;align-items:center;gap:3px;
+  border-radius:20px;font-size:10px;font-weight:600;padding:3px 8px;}
+.b-ok{background:rgba(16,185,129,.12);color:#10B981;border:1px solid rgba(16,185,129,.25);}
+.b-warn{background:rgba(245,158,11,.12);color:#F59E0B;border:1px solid rgba(245,158,11,.25);}
+.b-red{background:rgba(239,68,68,.12);color:#EF4444;border:1px solid rgba(239,68,68,.25);}
+.b-blue{background:rgba(59,130,246,.12);color:#3B82F6;border:1px solid rgba(59,130,246,.25);}
+.kpi-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px;}
+.kpi-card{background:var(--s3);border-radius:var(--rxs);padding:10px 12px;}
+.kpi-val{font-size:22px;font-weight:700;}
+.kpi-lbl{font-size:10px;color:var(--text2);margin-top:1px;}
+.typing{display:flex;align-items:center;gap:4px;padding:12px 14px;
+  background:var(--s2);border:1px solid var(--border);
+  border-radius:14px 14px 14px 4px;width:fit-content;}
+.typing span{width:6px;height:6px;border-radius:50%;background:var(--text3);
+  animation:blink .9s ease-in-out infinite;}
+.typing span:nth-child(2){animation-delay:.2s;}
+.typing span:nth-child(3){animation-delay:.4s;}
+@keyframes blink{0%,100%{opacity:.2}50%{opacity:1}}
+.divider-line{height:0.5px;background:var(--border);margin:4px 0;}
+.alert-box{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);
+  border-radius:var(--rxs);padding:10px 12px;font-size:12px;color:#FCA5A5;margin-top:6px;}
+.ok-box{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);
+  border-radius:var(--rxs);padding:10px 12px;font-size:12px;color:#6EE7B7;margin-top:6px;}
+.cmd-list{display:flex;flex-direction:column;gap:4px;margin-top:4px;}
+.cmd-item{display:flex;gap:8px;align-items:baseline;}
+.cmd-key{font-family:'JetBrains Mono',monospace;font-size:11px;
+  color:var(--blue);white-space:nowrap;min-width:130px;}
+.cmd-desc{font-size:12px;color:var(--text2);}
+
+/* ── INPUT ── */
+.input-bar{
+  flex-shrink:0;
+  background:var(--s1);border-top:1px solid var(--border);
+  padding:12px 16px;display:flex;gap:10px;align-items:flex-end;
+}
+.input-box{
+  flex:1;background:var(--s2);border:1px solid var(--border2);
+  border-radius:22px;color:var(--text);font-family:'Outfit',sans-serif;
+  font-size:14px;padding:11px 16px;outline:none;resize:none;
+  max-height:120px;line-height:1.5;transition:border-color .2s;
+  -webkit-appearance:none;
+}
+.input-box:focus{border-color:var(--blue);}
+.input-box::placeholder{color:var(--text3);}
+.send-btn{
+  width:44px;height:44px;border-radius:50%;
+  background:var(--blue);border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;transition:background .15s,transform .1s;
+}
+.send-btn:active{background:var(--blue2);transform:scale(.95);}
+.send-btn svg{width:18px;height:18px;fill:none;stroke:white;stroke-width:2.5;
+  stroke-linecap:round;stroke-linejoin:round;}
+</style>
+</head>
+<body>
+
+<!-- ══ LOGIN ══ -->
+<div id="login-screen">
+  <div class="login-logo">🤖</div>
+  <div>
+    <div class="login-title">Bot Coordinador</div>
+    <div class="login-sub" style="margin-top:4px;">CAFAM COMERCIAL · Sistema de ingresos</div>
+  </div>
+  <div class="login-box">
+    <input class="login-input" type="password" id="pwd-input"
+           placeholder="Contraseña de acceso"
+           onkeydown="if(event.key==='Enter')checkPwd()"/>
+    <button class="login-btn" onclick="checkPwd()">Ingresar</button>
+    <div class="login-err" id="login-err">Contraseña incorrecta</div>
+  </div>
+</div>
+
+<!-- ══ HEADER ══ -->
+<div class="header">
+  <div class="h-logo">📦</div>
+  <div class="h-info">
+    <h1>Bot Coordinador · CAFAM COMERCIAL</h1>
+    <p>Asistente de turnos en tiempo real</p>
+  </div>
+  <div class="h-status">
+    <div class="dot-live"></div>
+    En línea
+  </div>
+</div>
+
+<!-- ══ CHIPS ══ -->
+<div class="chips-bar" id="chips-bar">
+  <div class="chip" onclick="sendCmd('resumen')">📊 Resumen</div>
+  <div class="chip" onclick="sendCmd('quién falta')">🚫 Quién falta</div>
+  <div class="chip" onclick="sendCmd('ingresos hoy')">✅ Ingresos hoy</div>
+  <div class="chip" onclick="sendCmd('próximos turnos')">⏰ Próximos turnos</div>
+  <div class="chip" onclick="sendCmd('tardanzas')">⚠️ Tardanzas</div>
+  <div class="chip" onclick="sendCmd('novedades hoy')">📋 Novedades</div>
+  <div class="chip" onclick="sendCmd('ayuda')">❓ Ayuda</div>
+</div>
+
+<!-- ══ CHAT ══ -->
+<div class="chat-wrap" id="chat"></div>
+
+<!-- ══ INPUT ══ -->
+<div class="input-bar">
+  <textarea class="input-box" id="msg-input" rows="1"
+    placeholder="Escribe un comando o pregunta…"
+    onkeydown="handleKey(event)"
+    oninput="autoResize(this)"></textarea>
+  <button class="send-btn" onclick="sendFromInput()">
+    <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+  </button>
+</div>
+
+<script>
+// ══ CONFIGURACIÓN ══
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw6mpAQeww9Eo_Zk8zNNkj-_PQAZtQnTcbVhO63b8Lc6SCKkUCsRyyBvrza5Y8bY_5Rew/exec'; // misma URL del script principal
+const PASSWORD        = 'cafam';                // cambiar por tu contraseña
+const NOMBRE_COORD    = 'Coordinador';
+
+// ══ LOGIN ══
+function checkPwd() {
+  const val = document.getElementById('pwd-input').value;
+  if (val === PASSWORD) {
+    document.getElementById('login-screen').style.display = 'none';
+    botWelcome();
+  } else {
+    document.getElementById('login-err').style.display = 'block';
+    document.getElementById('pwd-input').value = '';
+    document.getElementById('pwd-input').focus();
+  }
+}
+
+// ══ TIEMPO ══
+function horaActual() {
+  return new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit',hour12:true});
+}
+function fechaHoy() {
+  return new Date().toLocaleDateString('es-CO',{day:'2-digit',month:'2-digit',year:'numeric'});
+}
+
+// ══ CHAT HELPERS ══
+function addMsg(html, type='bot') {
+  const chat = document.getElementById('chat');
+  const div  = document.createElement('div');
+  div.className = 'msg ' + type;
+  div.innerHTML = `
+    <div class="msg-bubble">${html}</div>
+    <div class="msg-time">${horaActual()}</div>`;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+  return div;
+}
+
+function addUserMsg(text) {
+  addMsg(text, 'user');
+}
+
+function showTyping() {
+  const chat = document.getElementById('chat');
+  const div  = document.createElement('div');
+  div.className = 'msg bot';
+  div.id = 'typing-indicator';
+  div.innerHTML = `<div class="typing"><span></span><span></span><span></span></div>`;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function removeTyping() {
+  const t = document.getElementById('typing-indicator');
+  if (t) t.remove();
+}
+
+// ══ BIENVENIDA ══
+function botWelcome() {
+  const h = new Date().getHours();
+  const saludo = h < 12 ? 'Buenos días' : h < 18 ? 'Buenas tardes' : 'Buenas noches';
+  addMsg(`
+    <div class="bot-section">
+      <strong style="font-size:15px;">${saludo}, ${NOMBRE_COORD} 👋</strong><br>
+      <span style="color:var(--text2);font-size:12px;">Soy tu asistente de turnos · ${fechaHoy()}</span>
+    </div>
+    <div class="divider-line"></div>
+    <div class="bot-section">
+      <div class="bot-title">Comandos disponibles</div>
+      <div class="cmd-list">
+        <div class="cmd-item"><span class="cmd-key">resumen</span><span class="cmd-desc">Resumen completo del día</span></div>
+        <div class="cmd-item"><span class="cmd-key">quién falta</span><span class="cmd-desc">Mensajeros sin reportar</span></div>
+        <div class="cmd-item"><span class="cmd-key">ingresos hoy</span><span class="cmd-desc">Lista de todos los que ingresaron</span></div>
+        <div class="cmd-item"><span class="cmd-key">próximos turnos</span><span class="cmd-desc">Turnos en la próxima hora</span></div>
+        <div class="cmd-item"><span class="cmd-key">tardanzas</span><span class="cmd-desc">Mensajeros con tardanza</span></div>
+        <div class="cmd-item"><span class="cmd-key">novedades hoy</span><span class="cmd-desc">Anticipados y observaciones</span></div>
+        <div class="cmd-item"><span class="cmd-key">punto [nombre]</span><span class="cmd-desc">Estado de un punto específico</span></div>
+        <div class="cmd-item"><span class="cmd-key">buscar [cédula]</span><span class="cmd-desc">Info de un mensajero</span></div>
+        <div class="cmd-item"><span class="cmd-key">activar alertas</span><span class="cmd-desc">Encender alertas automáticas</span></div>
+        <div class="cmd-item"><span class="cmd-key">desactivar alertas</span><span class="cmd-desc">Apagar alertas automáticas</span></div>
+      </div>
+    </div>
+  `);
+}
+
+// ══ ENVIAR COMANDO ══
+function sendCmd(text) {
+  document.getElementById('msg-input').value = '';
+  addUserMsg(text);
+  procesarComando(text.toLowerCase().trim());
+}
+
+function sendFromInput() {
+  const input = document.getElementById('msg-input');
+  const text  = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  autoResize(input);
+  addUserMsg(text);
+  procesarComando(text.toLowerCase().trim());
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendFromInput();
+  }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+// ══ PROCESADOR DE COMANDOS ══
+async function procesarComando(cmd) {
+  showTyping();
+  // Pequeño delay para simular procesamiento
+  await new Promise(r => setTimeout(r, 600));
+
+  try {
+    const data = await llamarScript(cmd);
+    removeTyping();
+    renderRespuesta(cmd, data);
+  } catch(e) {
+    removeTyping();
+    addMsg(`<span style="color:var(--red);">⚠️ Error al conectar con el servidor.<br><span style="font-size:11px;color:var(--text2);">${e.message}</span></span>`);
+  }
+}
+
+// ══ LLAMAR AL APPS SCRIPT ══
+async function llamarScript(comando) {
+  const response = await fetch(APPS_SCRIPT_URL, {
+    method  : 'POST',
+    mode    : 'no-cors',
+    headers : { 'Content-Type': 'text/plain' },
+    body    : JSON.stringify({ accion: 'bot', comando })
+  });
+  // no-cors = respuesta opaca, usamos datos simulados mientras
+  // En producción con CORS habilitado se lee la respuesta real
+  // Por ahora el script procesa igual y la respuesta se obtiene por polling
+  return await obtenerDatosDirectos(comando);
+}
+
+// ══ OBTENER DATOS DIRECTAMENTE DEL APPS SCRIPT (GET con parámetros) ══
+async function obtenerDatosDirectos(comando) {
+  const url = APPS_SCRIPT_URL + '?accion=bot&comando=' + encodeURIComponent(comando);
+  const res = await fetch(url, { redirect: 'follow' });
+  const json = await res.json();
+  return json;
+}
+
+// ══ RENDERIZAR RESPUESTA DEL BOT ══
+function renderRespuesta(cmd, data) {
+  if (!data || data.error) {
+    addMsg(`<span style="color:var(--red);">No pude obtener los datos. Verifica la conexión con el servidor.</span>`);
+    return;
+  }
+
+  const tipo = data.tipo;
+
+  if (tipo === 'resumen') renderResumen(data);
+  else if (tipo === 'quien_falta') renderQuienFalta(data);
+  else if (tipo === 'ingresos') renderIngresos(data);
+  else if (tipo === 'proximos') renderProximos(data);
+  else if (tipo === 'tardanzas') renderTardanzas(data);
+  else if (tipo === 'novedades') renderNovedades(data);
+  else if (tipo === 'punto') renderPunto(data);
+  else if (tipo === 'buscar') renderBuscar(data);
+  else if (tipo === 'alerta_ok') addMsg(`<div class="ok-box">${data.mensaje}</div>`);
+  else if (tipo === 'ayuda') renderAyuda();
+  else addMsg(data.mensaje || 'Comando no reconocido. Escribe <strong>ayuda</strong> para ver los comandos.');
+}
+
+// ══ RENDERS ══
+function renderResumen(d) {
+  const pct = d.total > 0 ? Math.round((d.aTiempo / d.total) * 100) : 0;
+  const color = pct >= 80 ? '#10B981' : pct >= 60 ? '#F59E0B' : '#EF4444';
+  addMsg(`
+    <div class="bot-section">
+      <strong>📊 Resumen del día · ${d.fecha}</strong>
+    </div>
+    <div class="kpi-row">
+      <div class="kpi-card"><div class="kpi-val" style="color:#10B981;">${d.aTiempo}</div><div class="kpi-lbl">✅ A tiempo</div></div>
+      <div class="kpi-card"><div class="kpi-val" style="color:#EF4444;">${d.sinReporte}</div><div class="kpi-lbl">🚫 Sin reporte</div></div>
+      <div class="kpi-card"><div class="kpi-val" style="color:#F59E0B;">${d.tardanza}</div><div class="kpi-lbl">⚠️ Tardanza</div></div>
+      <div class="kpi-card"><div class="kpi-val" style="color:${color};">${pct}%</div><div class="kpi-lbl">📈 Cumplimiento</div></div>
+    </div>
+    ${d.sinReporte > 0
+      ? `<div class="alert-box">⚡ Hay ${d.sinReporte} mensajero(s) sin reportar. Escribe <strong>quién falta</strong> para ver la lista.</div>`
+      : `<div class="ok-box">✅ Todos los mensajeros han reportado hasta ahora.</div>`}
+  `);
+}
+
+function renderQuienFalta(d) {
+  if (!d.lista || d.lista.length === 0) {
+    addMsg(`<div class="ok-box">✅ Todos los mensajeros han reportado ingreso.</div>`);
+    return;
+  }
+  let rows = d.lista.map(m => `
+    <div class="bot-row">
+      <div>
+        <div class="bot-name">${m.nombre}</div>
+        <div class="bot-detail">📍 ${m.punto} · 🕐 ${m.turno}</div>
+      </div>
+      <span class="badge b-red">🚫 Falta</span>
+    </div>`).join('');
+  addMsg(`
+    <div class="bot-section">
+      <div class="bot-title">Sin reporte · ${d.lista.length} mensajero(s)</div>
+      ${rows}
+    </div>
+    <div class="alert-box" style="margin-top:8px;">⚡ Acción requerida: contactar a cada mensajero.</div>
+  `);
+}
+
+function renderIngresos(d) {
+  if (!d.lista || d.lista.length === 0) {
+    addMsg(`<span style="color:var(--text2);">No hay ingresos registrados hoy.</span>`);
+    return;
+  }
+  let rows = d.lista.map(m => `
+    <div class="bot-row">
+      <div>
+        <div class="bot-name">${m.nombre}</div>
+        <div class="bot-detail">📍 ${m.punto} · 🕐 ${m.hora}</div>
+      </div>
+      <span class="badge ${m.estado==='A TIEMPO'||m.estado==='ANTICIPADO'?'b-ok':m.estado==='TARDANZA'?'b-warn':'b-red'}">${m.estado}</span>
+    </div>`).join('');
+  addMsg(`
+    <div class="bot-section">
+      <div class="bot-title">Ingresos registrados hoy · ${d.lista.length}</div>
+      ${rows}
+    </div>
+  `);
+}
+
+function renderProximos(d) {
+  if (!d.lista || d.lista.length === 0) {
+    addMsg(`<span style="color:var(--text2);">No hay turnos programados en la próxima hora.</span>`);
+    return;
+  }
+  let rows = d.lista.map(m => `
+    <div class="bot-row">
+      <div>
+        <div class="bot-name">${m.nombre}</div>
+        <div class="bot-detail">📍 ${m.punto} · Inicia: ${m.horaInicio}</div>
+      </div>
+      <span class="badge b-blue">En ${m.enMinutos} min</span>
+    </div>`).join('');
+  addMsg(`
+    <div class="bot-section">
+      <div class="bot-title">⏰ Próximos turnos (siguiente hora)</div>
+      ${rows}
+    </div>
+  `);
+}
+
+function renderTardanzas(d) {
+  if (!d.lista || d.lista.length === 0) {
+    addMsg(`<div class="ok-box">✅ No hay tardanzas registradas hoy.</div>`);
+    return;
+  }
+  let rows = d.lista.map(m => `
+    <div class="bot-row">
+      <div>
+        <div class="bot-name">${m.nombre}</div>
+        <div class="bot-detail">📍 ${m.punto} · ${m.diff} min tarde · Ingresó ${m.hora}</div>
+      </div>
+      <span class="badge b-warn">+${m.diff} min</span>
+    </div>`).join('');
+  addMsg(`
+    <div class="bot-section">
+      <div class="bot-title">⚠️ Tardanzas · ${d.lista.length}</div>
+      ${rows}
+    </div>
+  `);
+}
+
+function renderNovedades(d) {
+  let html = `<div class="bot-section"><strong>📋 Novedades del día · ${d.fecha}</strong></div>`;
+  if (d.anticipados && d.anticipados.length > 0) {
+    html += `<div class="bot-section"><div class="bot-title">🔵 Anticipados</div>`;
+    d.anticipados.forEach(m => {
+      html += `<div class="bot-row"><div><div class="bot-name">${m.nombre}</div><div class="bot-detail">📍 ${m.punto} · Llegó ${Math.abs(m.diff)} min antes</div></div><span class="badge b-blue">Anticipado</span></div>`;
+    });
+    html += `</div>`;
+  }
+  if (d.observaciones && d.observaciones.length > 0) {
+    html += `<div class="bot-section"><div class="bot-title">📌 Observaciones</div>`;
+    d.observaciones.forEach(m => {
+      html += `<div class="bot-row"><div class="bot-name">${m.nombre}</div><div class="bot-detail">${m.obs}</div></div>`;
+    });
+    html += `</div>`;
+  }
+  if ((!d.anticipados || d.anticipados.length===0) && (!d.observaciones || d.observaciones.length===0)) {
+    html += `<div class="ok-box">✅ Sin novedades especiales hoy.</div>`;
+  }
+  addMsg(html);
+}
+
+function renderPunto(d) {
+  let html = `<div class="bot-section"><strong>📍 Punto: ${d.punto}</strong></div>`;
+  if (!d.mensajeros || d.mensajeros.length === 0) {
+    html += `<span style="color:var(--text2);">No hay mensajeros asignados a este punto hoy.</span>`;
+  } else {
+    d.mensajeros.forEach(m => {
+      const badgeClass = m.estado==='A TIEMPO'||m.estado==='ANTICIPADO' ? 'b-ok'
+        : m.estado==='TARDANZA' ? 'b-warn' : 'b-red';
+      html += `<div class="bot-row">
+        <div><div class="bot-name">${m.nombre}</div><div class="bot-detail">🕐 Turno: ${m.turno}</div></div>
+        <span class="badge ${badgeClass}">${m.estado||'Sin reporte'}</span>
+      </div>`;
+    });
+  }
+  addMsg(html);
+}
+
+function renderBuscar(d) {
+  if (!d.mensajero) {
+    addMsg(`<span style="color:var(--text2);">No encontré ningún mensajero con esa cédula hoy.</span>`);
+    return;
+  }
+  const m = d.mensajero;
+  const badgeClass = m.estado==='A TIEMPO'||m.estado==='ANTICIPADO' ? 'b-ok'
+    : m.estado==='TARDANZA' ? 'b-warn' : 'b-red';
+  addMsg(`
+    <div class="bot-section">
+      <strong>${m.nombre}</strong><br>
+      <span style="color:var(--text2);font-size:12px;">Cédula: ${m.cedula}</span>
+    </div>
+    <div class="divider-line"></div>
+    <div class="bot-row"><span style="color:var(--text2);font-size:12px;">Punto</span><strong>${m.punto}</strong></div>
+    <div class="bot-row"><span style="color:var(--text2);font-size:12px;">Turno</span><strong>${m.turno}</strong></div>
+    <div class="bot-row"><span style="color:var(--text2);font-size:12px;">Hora ingreso</span><strong>${m.hora||'--'}</strong></div>
+    <div class="bot-row"><span style="color:var(--text2);font-size:12px;">Diferencia</span><strong>${m.diff!==undefined?m.diff+' min':'--'}</strong></div>
+    <div class="bot-row"><span style="color:var(--text2);font-size:12px;">Estado</span><span class="badge ${badgeClass}">${m.estado||'Sin reporte'}</span></div>
+    ${m.direccion?`<div class="bot-row"><span style="color:var(--text2);font-size:12px;">GPS</span><span style="font-size:11px;text-align:right;max-width:180px;">${m.direccion}</span></div>`:''}
+  `);
+}
+
+function renderAyuda() {
+  addMsg(`
+    <div class="bot-section">
+      <strong>❓ Comandos disponibles</strong>
+    </div>
+    <div class="cmd-list">
+      <div class="cmd-item"><span class="cmd-key">resumen</span><span class="cmd-desc">KPIs del día: cumplimiento, tardanzas, ausencias</span></div>
+      <div class="cmd-item"><span class="cmd-key">quién falta</span><span class="cmd-desc">Lista de mensajeros sin reportar turno</span></div>
+      <div class="cmd-item"><span class="cmd-key">ingresos hoy</span><span class="cmd-desc">Todos los ingresos registrados con estado</span></div>
+      <div class="cmd-item"><span class="cmd-key">próximos turnos</span><span class="cmd-desc">Mensajeros que deben reportar en la siguiente hora</span></div>
+      <div class="cmd-item"><span class="cmd-key">tardanzas</span><span class="cmd-desc">Quiénes llegaron tarde y cuántos minutos</span></div>
+      <div class="cmd-item"><span class="cmd-key">novedades hoy</span><span class="cmd-desc">Anticipados y observaciones especiales</span></div>
+      <div class="cmd-item"><span class="cmd-key">punto QUIRINAL</span><span class="cmd-desc">Estado de todos los mensajeros de un punto</span></div>
+      <div class="cmd-item"><span class="cmd-key">buscar 1032359927</span><span class="cmd-desc">Buscar mensajero por número de cédula</span></div>
+      <div class="cmd-item"><span class="cmd-key">activar alertas</span><span class="cmd-desc">Encender notificaciones automáticas por WhatsApp</span></div>
+      <div class="cmd-item"><span class="cmd-key">desactivar alertas</span><span class="cmd-desc">Apagar notificaciones automáticas</span></div>
+    </div>
+  `);
+}
+</script>
+</body>
+</html>
