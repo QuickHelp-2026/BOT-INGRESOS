@@ -235,7 +235,7 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);disp
 
 <script>
 // ══ CONFIGURACIÓN ══
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw6mpAQeww9Eo_Zk8zNNkj-_PQAZtQnTcbVhO63b8Lc6SCKkUCsRyyBvrza5Y8bY_5Rew/exec'; // misma URL del script principal
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw7a_U4y9hyu56B-BHEliAgO0LBAapSBY7nkQsPT0KUWlfnzUfVEaHrdqAo1xtu1g7ZBg/exec'; // misma URL del script principal
 const PASSWORD        = 'cafam';                // cambiar por tu contraseña
 const NOMBRE_COORD    = 'Coordinador';
 
@@ -411,44 +411,65 @@ function renderRespuesta(cmd, data) {
 
 // ══ RENDERS ══
 function renderResumen(d) {
-  const pct = d.total > 0 ? Math.round((d.aTiempo / d.total) * 100) : 0;
+  const pct   = d.total > 0 ? Math.round((d.aTiempo / d.total) * 100) : 0;
   const color = pct >= 80 ? '#10B981' : pct >= 60 ? '#F59E0B' : '#EF4444';
   addMsg(`
     <div class="bot-section">
       <strong>📊 Resumen del día · ${d.fecha}</strong>
     </div>
     <div class="kpi-row">
-      <div class="kpi-card"><div class="kpi-val" style="color:#10B981;">${d.aTiempo}</div><div class="kpi-lbl">✅ A tiempo</div></div>
-      <div class="kpi-card"><div class="kpi-val" style="color:#EF4444;">${d.sinReporte}</div><div class="kpi-lbl">🚫 Sin reporte</div></div>
-      <div class="kpi-card"><div class="kpi-val" style="color:#F59E0B;">${d.tardanza}</div><div class="kpi-lbl">⚠️ Tardanza</div></div>
+      <div class="kpi-card"><div class="kpi-val" style="color:#10B981;">${d.aTiempo}</div><div class="kpi-lbl">✅ Ingresaron</div></div>
+      <div class="kpi-card"><div class="kpi-val" style="color:#EF4444;">${d.sinReporte}</div><div class="kpi-lbl">🚫 Faltan ahora</div></div>
+      <div class="kpi-card"><div class="kpi-val" style="color:#F59E0B;">${d.tardanza}</div><div class="kpi-lbl">⚠️ Tardanzas</div></div>
       <div class="kpi-card"><div class="kpi-val" style="color:${color};">${pct}%</div><div class="kpi-lbl">📈 Cumplimiento</div></div>
     </div>
+    ${d.proximosIngresan > 0 ? `<div style="background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);border-radius:7px;padding:9px 12px;font-size:12px;color:#93C5FD;margin-top:4px;">⏰ <strong>${d.proximosIngresan}</strong> mensajero(s) ingresan en la próxima hora</div>` : ''}
     ${d.sinReporte > 0
-      ? `<div class="alert-box">⚡ Hay ${d.sinReporte} mensajero(s) sin reportar. Escribe <strong>quién falta</strong> para ver la lista.</div>`
-      : `<div class="ok-box">✅ Todos los mensajeros han reportado hasta ahora.</div>`}
+      ? `<div class="alert-box" style="margin-top:4px;">⚡ <strong>${d.sinReporte}</strong> sin reportar (turno ya iniciado). Escribe <strong>quién falta</strong> para ver la lista.</div>`
+      : `<div class="ok-box" style="margin-top:4px;">✅ Todos los turnos activos han reportado.</div>`}
   `);
 }
 
 function renderQuienFalta(d) {
-  if (!d.lista || d.lista.length === 0) {
-    addMsg(`<div class="ok-box">✅ Todos los mensajeros han reportado ingreso.</div>`);
+  const faltan  = d.faltan  || [];
+  const proximos = d.proximos || [];
+  if (faltan.length === 0 && proximos.length === 0) {
+    addMsg(`<div class="ok-box">✅ Todos los mensajeros han reportado. No hay pendientes en este momento.</div>`);
     return;
   }
-  let rows = d.lista.map(m => `
-    <div class="bot-row">
-      <div>
-        <div class="bot-name">${m.nombre}</div>
-        <div class="bot-detail">📍 ${m.punto} · 🕐 ${m.turno}</div>
-      </div>
-      <span class="badge b-red">🚫 Falta</span>
-    </div>`).join('');
-  addMsg(`
-    <div class="bot-section">
-      <div class="bot-title">Sin reporte · ${d.lista.length} mensajero(s)</div>
-      ${rows}
-    </div>
-    <div class="alert-box" style="margin-top:8px;">⚡ Acción requerida: contactar a cada mensajero.</div>
-  `);
+  let html = '';
+
+  if (faltan.length > 0) {
+    html += `<div class="bot-section">
+      <div class="bot-title">🚫 Sin reportar — turno ya inició · ${faltan.length}</div>`;
+    faltan.forEach(m => {
+      html += `<div class="bot-row">
+        <div>
+          <div class="bot-name">${m.nombre}</div>
+          <div class="bot-detail">📍 ${m.punto} · Turno: ${m.turno} · <strong style="color:#EF4444;">${m.minutosRetraso} min sin reportar</strong></div>
+        </div>
+        <span class="badge b-red">🚫 Falta</span>
+      </div>`;
+    });
+    html += `</div><div class="alert-box">⚡ Acción requerida: contactar a cada mensajero de esta lista.</div>`;
+  }
+
+  if (proximos.length > 0) {
+    html += `<div class="bot-section" style="margin-top:${faltan.length?'10px':'0'}">
+      <div class="bot-title">⏰ Próximo ingreso · siguiente hora · ${proximos.length}</div>`;
+    proximos.forEach(m => {
+      html += `<div class="bot-row">
+        <div>
+          <div class="bot-name">${m.nombre}</div>
+          <div class="bot-detail">📍 ${m.punto} · Inicia: ${m.horaInicio} · en ${m.enMinutos} min</div>
+        </div>
+        <span class="badge b-blue">⏰ Próximo</span>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  addMsg(html);
 }
 
 function renderIngresos(d) {
@@ -516,23 +537,57 @@ function renderTardanzas(d) {
 
 function renderNovedades(d) {
   let html = `<div class="bot-section"><strong>📋 Novedades del día · ${d.fecha}</strong></div>`;
-  if (d.anticipados && d.anticipados.length > 0) {
-    html += `<div class="bot-section"><div class="bot-title">🔵 Anticipados</div>`;
-    d.anticipados.forEach(m => {
-      html += `<div class="bot-row"><div><div class="bot-name">${m.nombre}</div><div class="bot-detail">📍 ${m.punto} · Llegó ${Math.abs(m.diff)} min antes</div></div><span class="badge b-blue">Anticipado</span></div>`;
+  let hayAlgo = false;
+
+  if (d.faltanAhora && d.faltanAhora.length > 0) {
+    hayAlgo = true;
+    html += `<div class="bot-section"><div class="bot-title">🚫 Sin reportar (turno ya inició) · ${d.faltanAhora.length}</div>`;
+    d.faltanAhora.forEach(m => {
+      html += `<div class="bot-row"><div><div class="bot-name">${m.nombre}</div><div class="bot-detail">📍 ${m.punto} · Turno: ${m.turno}</div></div><span class="badge b-red">Falta</span></div>`;
     });
     html += `</div>`;
   }
+
+  if (d.tardanzas && d.tardanzas.length > 0) {
+    hayAlgo = true;
+    html += `<div class="bot-section"><div class="bot-title">⚠️ Tardanzas registradas · ${d.tardanzas.length}</div>`;
+    d.tardanzas.forEach(m => {
+      html += `<div class="bot-row"><div><div class="bot-name">${m.nombre}</div><div class="bot-detail">📍 ${m.punto} · Ingresó ${m.hora} · <strong style="color:#F59E0B;">+${m.diff} min tarde</strong></div></div><span class="badge b-warn">+${m.diff} min</span></div>`;
+    });
+    html += `</div>`;
+  }
+
+  if (d.proximos && d.proximos.length > 0) {
+    hayAlgo = true;
+    html += `<div class="bot-section"><div class="bot-title">⏰ Próximos ingresos · ${d.proximos.length}</div>`;
+    d.proximos.forEach(m => {
+      html += `<div class="bot-row"><div><div class="bot-name">${m.nombre}</div><div class="bot-detail">📍 ${m.punto} · Inicia: ${m.horaInicio} · en ${m.enMinutos} min</div></div><span class="badge b-blue">Próximo</span></div>`;
+    });
+    html += `</div>`;
+  }
+
+  if (d.anticipados && d.anticipados.length > 0) {
+    hayAlgo = true;
+    html += `<div class="bot-section"><div class="bot-title">🔵 Anticipados · ${d.anticipados.length}</div>`;
+    d.anticipados.forEach(m => {
+      html += `<div class="bot-row"><div><div class="bot-name">${m.nombre}</div><div class="bot-detail">📍 ${m.punto} · Llegó ${m.diff} min antes</div></div><span class="badge b-blue">Anticipado</span></div>`;
+    });
+    html += `</div>`;
+  }
+
   if (d.observaciones && d.observaciones.length > 0) {
+    hayAlgo = true;
     html += `<div class="bot-section"><div class="bot-title">📌 Observaciones</div>`;
     d.observaciones.forEach(m => {
       html += `<div class="bot-row"><div class="bot-name">${m.nombre}</div><div class="bot-detail">${m.obs}</div></div>`;
     });
     html += `</div>`;
   }
-  if ((!d.anticipados || d.anticipados.length===0) && (!d.observaciones || d.observaciones.length===0)) {
-    html += `<div class="ok-box">✅ Sin novedades especiales hoy.</div>`;
+
+  if (!hayAlgo) {
+    html += `<div class="ok-box">✅ Todo en orden — sin novedades en este momento.</div>`;
   }
+
   addMsg(html);
 }
 
